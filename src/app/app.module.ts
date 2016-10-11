@@ -1,0 +1,33 @@
+import { NgModule } from '@angular/core';
+import { IonicApp, IonicModule } from 'ionic-angular';
+import { MyApp } from './app.component';
+import { Page1 } from '../pages/page1/page1';
+import { Page2 } from '../pages/page2/page2';
+import { PhotosPage } from '../pages/photos/photos';
+import { FlickrService } from '../services/flickr.service';
+import { LoginPage } from '../pages/login/login';
+import { FormsModule } from '@angular/forms';
+
+@NgModule({
+  declarations: [
+    MyApp,
+    Page1,
+    Page2,
+    PhotosPage,
+    LoginPage
+  ],
+  imports: [
+    IonicModule.forRoot(MyApp),
+    FormsModule
+  ],
+  bootstrap: [IonicApp],
+  entryComponents: [
+    MyApp,
+    Page1,
+    Page2,
+    PhotosPage,
+    LoginPage
+  ],
+  providers: [FlickrService]
+})
+export class AppModule {}
