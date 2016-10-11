@@ -28,6 +28,8 @@ export class MyApp {
       { title: 'Login', component: LoginPage }
     ];
 
+    
+
   }
 
   initializeApp() {

@@ -8,13 +8,5 @@
 
 
 <ion-content padding>
-  <button ion-button (click)="login()">Log In to Flickr</button>
-  <div *ngIf="tokens">
-    <div *ngFor="let token of tokens">
-      {{ token }}
-    </div>
-  </div>
-  
-    Verifier: <input [(ngModel)]="verifier" />
-
+  <button *ngIf="showLoginButton" ion-button (click)="login()">Log In to Flickr</button>
 </ion-content>

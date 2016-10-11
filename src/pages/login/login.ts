@@ -2,8 +2,10 @@ import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { FlickrService } from '../../services/flickr.service';
 import { Platform } from 'ionic-angular';
+import { PhotosPage } from '../photos/photos';
 
 declare var window: any; // to use the cordova-inapp-browser plugin
+declare var LocalForage: any;
 
 @Component({
   selector: 'page-login',
@@ -17,11 +19,25 @@ export class LoginPage {
   authorizeUrl: string = 'https://www.flickr.com/services/oauth/authorize';
   callback: string = 'http://designthinktravel.com/callback/'
 
+  localForage: any;
+  showLoginButton: boolean;
+
   constructor(public navCtrl: NavController, private flickrService: FlickrService,
-    private platform: Platform) { }
+    private platform: Platform) {
+    this.localForage = window.localForage;
+  }
 
   ionViewDidLoad() {
-
+    // If user's auth tokens are saved, go to photos page
+    console.log("ionViewDidLoad");
+    if (localStorage.getItem("oauth_token") != null
+      && localStorage.getItem("oauth_token_secret") != null) {
+      this.showLoginButton = false;
+      this.goToPhotos();
+    } else {
+      console.log("user tokens not found");
+      this.showLoginButton = true;
+    }
   }
 
   login() {
@@ -77,11 +93,32 @@ export class LoginPage {
     });
   }
 
-  getAccessToken(reqToken: string, reqSecret: string, verifier: string){
+  getAccessToken(reqToken: string, reqSecret: string, verifier: string) {
     this.flickrService.getAccessToken(reqToken, reqSecret, verifier).subscribe(
-      response => console.log('received access tokens: ' + response),
+      response => this.storeAccessTokens(response),
       error => console.log(error),
       () => console.log('finished')
     );
+  }
+
+  storeAccessTokens(tokens: string[]) {
+
+    console.log("Received access tokens: " + tokens);
+    localStorage.setItem("oauth_token", tokens[1].split("=")[1]);
+    localStorage.setItem("oauth_token_secret", tokens[2].split("=")[1]);
+    localStorage.setItem("user_nsid", tokens[3].split("=")[1]);
+    localStorage.setItem("username", tokens[4].split("=")[1]);
+
+    // Test storage
+    console.log("stored oauth_token: " + localStorage.getItem("oauth_token"));
+    console.log("stored oauth_token_secret: " + localStorage.getItem("oauth_token_secret"));
+    console.log("stored user_nsid: " + localStorage.getItem("user_nsid"));
+    console.log("stored username: " + localStorage.getItem("username"));
+
+    this.goToPhotos();
+  }
+
+  goToPhotos() {
+    this.navCtrl.push(PhotosPage);
   }
 }

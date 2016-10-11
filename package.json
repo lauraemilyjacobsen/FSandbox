@@ -27,6 +27,7 @@
     "ionic-angular": "^2.0.0-rc.0",
     "ionic-native": "^2.0.3",
     "ionicons": "^3.0.0",
+    "localforage": "^1.4.3",
     "oauth-signature": "latest",
     "rxjs": "5.0.0-beta.12"
   },

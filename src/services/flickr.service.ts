@@ -20,16 +20,68 @@ export class FlickrService {
     callback: string = 'http://designthinktravel.com/callback/'
     accessUrl: string = 'https://www.flickr.com/services/oauth/access_token';
 
-    photosUrl: string = 'https://api.flickr.com/services/rest/?method=flickr.photos.search&';
+    apiUrl: string = 'https://api.flickr.com/services/rest/';
 
-    constructor(public http: Http) { }
+    constructor(public http: Http) {
+        this.oauthSignature = window.oauthSignature;
+     }
 
     // Load the first 100 photos for a user
     getPhotos(): Observable<Photo[]> {
-        let url: string = this.photosUrl
-            + 'api_key=' + this.apiKey + '&user_id=65476859%40N08&format=json&nojsoncallback=1';
-        console.log('photos url: ' + url);
-        return this.http.get(url)
+        this.oauthSignature = window.oauthSignature;
+
+        // Retrieve the user's token, secret, and user id
+        let oauth_token = localStorage.getItem("oauth_token");
+        let oauth_token_secret = localStorage.getItem("oauth_token_secret");
+        let user_nsid = localStorage.getItem("user_nsid");
+
+        console.log("retrieved from local storage: oauth_token: " + oauth_token +
+            ", oauth_token_secret: " + oauth_token_secret + ", user_nsid: " + user_nsid);
+
+        // Generate a nonce and a timestamp
+        let nonce: string = this.getNonce();
+        let timestamp: string = this.getTimestamp();
+
+        // Build the parameters for a base string
+        var httpMethod = 'GET',
+            url = this.accessUrl,
+            parameters = {
+                nojsoncallback: '1',
+                oauth_nonce: nonce,
+                format: 'json',
+                oauth_consumer_key: this.apiKey,
+                oauth_timestamp: timestamp,
+                oauth_signature_method: 'HMAC-SHA1',
+                oauth_version: '1.0',
+                oauth_token: oauth_token,
+                user_id: 'me',
+                method: 'flickr.photos.search'
+            },
+            consumerSecret = this.apiSecret;
+
+        // Generate a signature for this request
+        let signature = this.oauthSignature.generate(
+            httpMethod, url, parameters, consumerSecret, oauth_token_secret, null);
+
+        let photosUrl: string = this.apiUrl +
+            '?nojsoncallback=1' +
+            '&oauth_nonce=' + this.getNonce() +
+            '&format=json' +
+            '&oauth_consumer_key=' + this.apiKey +
+            '&oauth_timestamp=' + this.getTimestamp() +
+            '&oauth_signature_method=HMAC-SHA1' +
+            '&oauth_version=1.0' +
+            '&oauth_token=' + oauth_token +
+            '&user_id=me' +
+            '&method=flickr.photos.search' +
+            '&oauth_signature=' + signature;
+
+            // let url: string = this.photosUrl
+            //     + 'api_key=' + this.apiKey + 
+            //     '&user_id=' + user_nsid +
+            //     '&format=json&nojsoncallback=1';
+            console.log('photos url: ' + photosUrl);
+        return this.http.get(photosUrl)
             .map(res => <Photo[]>res.json().photos.photo);
     }
 
@@ -46,7 +98,7 @@ export class FlickrService {
 
         // 1a: Get an OAuth signature for this request
         let nonce: string = this.getNonce();
-        let timestamp: string = String(Math.floor(new Date().getTime() / 1000));
+        let timestamp: string = this.getTimestamp();
 
         var httpMethod = 'GET',
             url = this.requestUrl,
@@ -80,13 +132,11 @@ export class FlickrService {
 
     // Step 3 of Flickr Oauth flow. Exchange the verifier obtained in the previous steps for an access token and secret,
     // then persist the token and secret so they can be used to sign calls to the API. 
-    getAccessToken(token: string, reqSecret: string, verifier:string): Observable<string[]> {
+    getAccessToken(token: string, reqSecret: string, verifier: string): Observable<string[]> {
 
         // Build a request string
         let nonce: string = this.getNonce();
-        let timestamp: string = String(Math.floor(new Date().getTime() / 1000));
-        console.log('nonce: ' + nonce + ', timestamp: ' + timestamp);
-        console.log('token: ' + token + ', reqSecret: ' + reqSecret);
+        let timestamp: string = this.getTimestamp();
 
         var httpMethod = 'GET',
             url = this.accessUrl,
@@ -103,7 +153,7 @@ export class FlickrService {
 
         // generates a RFC 3986 encoded, BASE64 encoded HMAC-SHA1 hash
         console.log('request secret: ' + reqSecret);
-        
+
         let encodedAccessSignature = this.oauthSignature.generate(httpMethod, url, parameters, consumerSecret, reqSecret, null);
         console.log('access signature: ' + encodedAccessSignature);
 
@@ -148,4 +198,7 @@ export class FlickrService {
         return text;
     }
 
+    getTimestamp(): string {
+        return String(Math.floor(new Date().getTime() / 1000));
+    }
 }

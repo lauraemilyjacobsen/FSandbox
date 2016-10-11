@@ -12,7 +12,6 @@ export class PhotosPage {
   photos: Photo[];
 
   constructor(private flickrService: FlickrService) {
-    
     // Load photos.
     flickrService.getPhotos().subscribe(photos => {
       for(let photo of photos){ 
